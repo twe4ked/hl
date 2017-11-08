@@ -39,7 +39,7 @@ content = STDIN.gets_to_end
 
 indices = Hash(Int32, Array(Tuple(String, String))).new([] of Tuple(String, String))
 patterns.each do |color, (pattern, _)|
-  content.scan(/#{pattern}/).each do |match_data|
+  content.scan(/#{pattern}/m).each do |match_data|
     indices[match_data.begin.as(Int32)] += [{color, "begin"}]
     indices[match_data.end.as(Int32)] += [{color, "end"}]
   end
