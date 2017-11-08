@@ -29,6 +29,9 @@ begin
 rescue OptionParser::InvalidOption
   puts "Unknown option."
   exit 1
+rescue OptionParser::MissingOption
+  puts "Missing option."
+  exit 1
 end
 if patterns.empty?
   puts parser
