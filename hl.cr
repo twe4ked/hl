@@ -37,25 +37,18 @@ end
 
 content = STDIN.gets_to_end
 
-indices = {} of Array(Int32) => String
+indices = Hash(Int32, Array(Tuple(String, String))).new([] of Tuple(String, String))
 patterns.each do |color, (pattern, _)|
   content.scan(/#{pattern}/).each do |match_data|
-    position = [
-      match_data.begin.as(Int32),
-      match_data.end.as(Int32),
-    ]
-    indices[position] = color
+    indices[match_data.begin.as(Int32)] += [{color, "begin"}]
+    indices[match_data.end.as(Int32)] += [{color, "end"}]
   end
 end
 
 stack = [] of String
 content.each_char.with_index do |char, i|
-  matches = indices
-    .select { |k, _| k.includes?(i) }
-    .map { |k, v| [k, v] }.sort { |(_, v)| 0 - patterns[v][1] }
-
-  matches.each do |(positions, color)|
-    if positions[0] == i
+  indices[i].sort { |(color, _)| 0 - patterns[color][1] }.each do |color, begin_or_end|
+    if begin_or_end == "begin"
       stack << color.as(String)
       print color_code(color)
     else
