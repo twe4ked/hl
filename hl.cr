@@ -37,20 +37,20 @@ end
 
 content = STDIN.gets_to_end
 
-indicies = {} of Array(Int32) => String
+indices = {} of Array(Int32) => String
 patterns.each do |color, (pattern, _)|
   content.scan(/#{pattern}/).each do |match_data|
     position = [
       match_data.begin.as(Int32),
       match_data.end.as(Int32),
     ]
-    indicies[position] = color
+    indices[position] = color
   end
 end
 
 stack = [] of String
 content.each_char.with_index do |char, i|
-  matches = indicies
+  matches = indices
     .select { |k, _| k.includes?(i) }
     .map { |k, v| [k, v] }.sort { |(_, v)| 0 - patterns[v][1] }
 
