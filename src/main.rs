@@ -150,21 +150,21 @@ where
                 match style.operation {
                     Operation::Start => {
                         stack.push(style.color);
-                        write!(output, "{}", SetForegroundColor(style.color)).unwrap();
+                        let _ = write!(output, "{}", SetForegroundColor(style.color));
                     }
                     Operation::End => {
                         if let Some(pos) = stack.iter().rposition(|x| x == &style.color) {
                             stack.remove(pos);
                         }
-                        write!(output, "{}", ResetColor).unwrap();
+                        let _ = write!(output, "{}", ResetColor);
                         for x in &stack {
-                            write!(output, "{}", SetForegroundColor(*x)).unwrap();
+                            let _ = write!(output, "{}", SetForegroundColor(*x));
                         }
                     }
                 }
             }
         }
-        write!(output, "{}", c).unwrap();
+        let _ = write!(output, "{}", c);
     });
 }
 
