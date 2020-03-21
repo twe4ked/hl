@@ -213,7 +213,8 @@ foo bar baz bar"
         let reset = format!("{}", ResetColor);
 
         let expected = format!(
-            "{red}foo {blue}{green}ba{reset}{red}{green}r{reset}{red} {blue}ba{reset}{red}z{reset} qux {blue}{green}ba{reset}{green}r{reset} {blue}{green}ba{reset}{green}r{reset}
+            "{red}foo {blue}{green}ba{reset}{red}{green}r{reset}{red} {blue}ba{reset}{red}z{reset} qux \
+{blue}{green}ba{reset}{green}r{reset} {blue}{green}ba{reset}{green}r{reset}
 foo {blue}{green}ba{reset}{green}r{reset}
 qux {blue}ba{reset}z
 {blue}{green}ba{reset}{green}r{reset}
