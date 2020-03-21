@@ -130,7 +130,7 @@ where
             v.sort_by(|a, b| a.order.cmp(&b.order));
         }
 
-        let mut stack = Vec::new();
+        let mut stack = Stack::new();
         input.chars().enumerate().for_each(|(i, c)| {
             if let Some(styles) = indices.get(&i) {
                 for style in styles {
@@ -140,11 +140,9 @@ where
                             let _ = write!(output, "{}", SetForegroundColor(style.color));
                         }
                         Operation::End => {
-                            if let Some(pos) = stack.iter().rposition(|x| x == &style.color) {
-                                stack.remove(pos);
-                            }
+                            stack.pop(style.color);
                             let _ = write!(output, "{}", ResetColor);
-                            for color in &stack {
+                            for color in stack.items().iter() {
                                 let _ = write!(output, "{}", SetForegroundColor(*color));
                             }
                         }
@@ -154,6 +152,30 @@ where
             let _ = write!(output, "{}", c);
         });
         input.clear();
+    }
+}
+
+struct Stack {
+    items: Vec<Color>,
+}
+
+impl Stack {
+    fn new() -> Self {
+        Self { items: Vec::new() }
+    }
+
+    fn push(&mut self, color: Color) {
+        self.items.push(color);
+    }
+
+    fn pop(&mut self, color: Color) {
+        if let Some(pos) = self.items.iter().rposition(|item| item == &color) {
+            self.items.remove(pos);
+        }
+    }
+
+    fn items(&self) -> &Vec<Color> {
+        &self.items
     }
 }
 
