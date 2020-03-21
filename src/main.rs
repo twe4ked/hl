@@ -128,7 +128,13 @@ where
 {
     let mut indices = HashMap::<usize, Vec<Style>>::new();
     for (color, (pattern, order)) in opts.patterns() {
-        for mat in Regex::new(&pattern).unwrap().find_iter(&input) {
+        for mat in Regex::new(&pattern)
+            .unwrap_or_else(|_| {
+                eprintln!("Invalid regex: {:?}", pattern);
+                std::process::exit(1);
+            })
+            .find_iter(&input)
+        {
             indices
                 .entry(mat.start())
                 .or_insert_with(Vec::new)
