@@ -98,10 +98,10 @@ fn main() {
     hl(&opts, &mut stdin, &mut stdout);
 }
 
-fn hl<T, U>(opts: &[Opt], reader: &mut U, output: &mut T)
+fn hl<W, R>(opts: &[Opt], reader: &mut R, writer: &mut W)
 where
-    T: Write,
-    U: BufRead,
+    W: Write,
+    R: BufRead,
 {
     let mut input = String::new();
     loop {
@@ -137,19 +137,19 @@ where
                     match style.operation {
                         Operation::Start => {
                             stack.push(style.color);
-                            let _ = write!(output, "{}", SetForegroundColor(style.color));
+                            let _ = write!(writer, "{}", SetForegroundColor(style.color));
                         }
                         Operation::End => {
                             stack.pop(style.color);
-                            let _ = write!(output, "{}", ResetColor);
+                            let _ = write!(writer, "{}", ResetColor);
                             for color in stack.items().iter() {
-                                let _ = write!(output, "{}", SetForegroundColor(*color));
+                                let _ = write!(writer, "{}", SetForegroundColor(*color));
                             }
                         }
                     }
                 }
             }
-            let _ = write!(output, "{}", c);
+            let _ = write!(writer, "{}", c);
         });
         input.clear();
     }
