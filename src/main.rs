@@ -1,4 +1,4 @@
-use clap::{App, Arg, ArgMatches};
+use clap::{App, Arg};
 use crossterm::style::{Color, ResetColor, SetForegroundColor};
 use regex::Regex;
 use std::collections::HashMap;
@@ -50,19 +50,31 @@ macro_rules! opts {
                 .author("Odin Dutton <odindutton@gmail.com>")
                 .about("Highlight patterns.");
             $(
-                 app = app.arg(arg($x, concat!("Highlight PATTERN in ", $x)));
+                app = app.arg(
+                    Arg::with_name($x)
+                        .short($x.chars().next().unwrap().to_string())
+                        .long($x)
+                        .value_name("PATTERN")
+                        .help(concat!("Highlight PATTERN in ", $x))
+                        .takes_value(true)
+                );
             )*
             let matches = app.get_matches();
 
             let mut opts = Vec::new();
             $(
-                if let Some((regex, index)) = get_arg(&matches, $x) {
+                matches.value_of($x).map(|pattern| {
+                    let regex = Regex::new(&pattern).unwrap_or_else(|_| {
+                        eprintln!("Invalid regex: {:?}", pattern);
+                        std::process::exit(1);
+                    });
+                    let index = matches.index_of($x).unwrap();
                     opts.push(Opt {
                         color: $color,
                         regex,
                         index,
                     });
-                }
+                });
             )*
             opts
         }
@@ -84,25 +96,6 @@ fn main() {
     let mut stdout = std::io::stdout();
 
     hl(&opts, &mut stdin, &mut stdout);
-}
-
-fn arg<'a, 'b>(name: &'a str, help: &'a str) -> Arg<'a, 'b> {
-    Arg::with_name(name)
-        .short(name.chars().next().unwrap().to_string())
-        .long(name)
-        .value_name("PATTERN")
-        .help(help)
-        .takes_value(true)
-}
-
-fn get_arg(matches: &ArgMatches, key: &str) -> Option<(Regex, usize)> {
-    matches.value_of(key).map(|pattern| {
-        let regex = Regex::new(&pattern).unwrap_or_else(|_| {
-            eprintln!("Invalid regex: {:?}", pattern);
-            std::process::exit(1);
-        });
-        (regex, matches.index_of(key).unwrap())
-    })
 }
 
 fn hl<T, U>(opts: &[Opt], reader: &mut U, output: &mut T)
