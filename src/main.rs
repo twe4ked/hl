@@ -177,7 +177,10 @@ where
 fn read_stdin() -> String {
     use std::io::{stdin, Read};
     let mut input = Vec::new();
-    stdin().read_to_end(&mut input).unwrap();
+    stdin().read_to_end(&mut input).unwrap_or_else(|e| {
+        eprintln!("{}", e);
+        std::process::exit(e.raw_os_error().unwrap_or(1));
+    });
     String::from_utf8(input).expect("invalid UTF-8 input")
 }
 
