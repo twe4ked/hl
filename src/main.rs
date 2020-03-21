@@ -6,17 +6,17 @@ use std::io::{BufRead, BufReader, Write};
 
 #[derive(Debug, Default)]
 struct Opts {
-    red: Option<(String, usize)>,
-    green: Option<(String, usize)>,
-    yellow: Option<(String, usize)>,
-    blue: Option<(String, usize)>,
-    magenta: Option<(String, usize)>,
-    cyan: Option<(String, usize)>,
-    white: Option<(String, usize)>,
+    red: Option<(Regex, usize)>,
+    green: Option<(Regex, usize)>,
+    yellow: Option<(Regex, usize)>,
+    blue: Option<(Regex, usize)>,
+    magenta: Option<(Regex, usize)>,
+    cyan: Option<(Regex, usize)>,
+    white: Option<(Regex, usize)>,
 }
 
 impl Opts {
-    fn patterns(&self) -> Vec<(Color, &(String, usize))> {
+    fn patterns(&self) -> Vec<(Color, &(Regex, usize))> {
         use Color::*;
         let mut patterns = Vec::new();
         if let Some(red) = &self.red {
@@ -114,9 +114,13 @@ fn arg<'a, 'b>(name: &'a str, help: &'a str) -> Arg<'a, 'b> {
         .takes_value(true)
 }
 
-fn get_arg(matches: &ArgMatches, key: &str) -> Option<(String, usize)> {
-    if let Some(v) = matches.value_of(key) {
-        Some((v.to_string(), matches.index_of(key).unwrap()))
+fn get_arg(matches: &ArgMatches, key: &str) -> Option<(Regex, usize)> {
+    if let Some(pattern) = matches.value_of(key) {
+        let regex = Regex::new(&pattern).unwrap_or_else(|_| {
+            eprintln!("Invalid regex: {:?}", pattern);
+            std::process::exit(1);
+        });
+        Some((regex, matches.index_of(key).unwrap()))
     } else {
         None
     }
@@ -138,14 +142,8 @@ where
         }
 
         let mut indices = HashMap::<usize, Vec<Style>>::new();
-        for (color, (pattern, order)) in opts.patterns() {
-            for mat in Regex::new(&pattern)
-                .unwrap_or_else(|_| {
-                    eprintln!("Invalid regex: {:?}", pattern);
-                    std::process::exit(1);
-                })
-                .find_iter(&input)
-            {
+        for (color, (regex, order)) in opts.patterns() {
+            for mat in regex.find_iter(&input) {
                 indices
                     .entry(mat.start())
                     .or_insert_with(Vec::new)
@@ -194,9 +192,9 @@ mod tests {
     #[test]
     fn it_works_multi_line() {
         let opts = Opts {
-            red: Some(("foo bar baz".to_string(), 0)),
-            blue: Some(("ba".to_string(), 1)),
-            green: Some(("bar".to_string(), 2)),
+            red: Some((Regex::new("foo bar baz").unwrap(), 0)),
+            blue: Some((Regex::new("ba").unwrap(), 1)),
+            green: Some((Regex::new("bar").unwrap(), 2)),
             ..Opts::default()
         };
 
