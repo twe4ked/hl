@@ -45,16 +45,32 @@ impl Opts {
 }
 
 #[derive(Debug)]
-enum Style {
-    Start(Color, usize),
-    End(Color, usize),
+enum Operation {
+    Start,
+    End,
+}
+
+#[derive(Debug)]
+struct Style {
+    operation: Operation,
+    color: Color,
+    order: usize,
 }
 
 impl Style {
-    fn order(&self) -> usize {
-        match self {
-            Self::Start(_, order) => *order,
-            Self::End(_, order) => *order,
+    fn start(color: Color, order: usize) -> Self {
+        Self {
+            operation: Operation::Start,
+            color,
+            order,
+        }
+    }
+
+    fn end(color: Color, order: usize) -> Self {
+        Self {
+            operation: Operation::End,
+            color,
+            order,
         }
     }
 }
@@ -116,33 +132,33 @@ where
             indices
                 .entry(mat.start())
                 .or_insert_with(Vec::new)
-                .push(Style::Start(color, *order));
+                .push(Style::start(color, *order));
             indices
                 .entry(mat.end())
                 .or_insert_with(Vec::new)
-                .push(Style::End(color, *order));
+                .push(Style::end(color, *order));
         }
     }
     for (_, v) in indices.iter_mut() {
-        v.sort_by(|a, b| a.order().cmp(&b.order()));
+        v.sort_by(|a, b| a.order.cmp(&b.order));
     }
 
     let mut stack = Vec::new();
     input.chars().enumerate().for_each(|(i, c)| {
-        if let Some(start_or_ends) = indices.get(&i) {
-            for start_or_end in start_or_ends {
-                match start_or_end {
-                    Style::Start(color, _) => {
-                        stack.push(color);
-                        write!(output, "{}", SetForegroundColor(*color)).unwrap();
+        if let Some(styles) = indices.get(&i) {
+            for style in styles {
+                match style.operation {
+                    Operation::Start => {
+                        stack.push(style.color);
+                        write!(output, "{}", SetForegroundColor(style.color)).unwrap();
                     }
-                    Style::End(color, _) => {
-                        if let Some(pos) = stack.iter().rposition(|x| x == &color) {
+                    Operation::End => {
+                        if let Some(pos) = stack.iter().rposition(|x| x == &style.color) {
                             stack.remove(pos);
                         }
                         write!(output, "{}", ResetColor).unwrap();
                         for x in &stack {
-                            write!(output, "{}", SetForegroundColor(**x)).unwrap();
+                            write!(output, "{}", SetForegroundColor(*x)).unwrap();
                         }
                     }
                 }
