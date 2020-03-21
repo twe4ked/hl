@@ -115,15 +115,13 @@ fn arg<'a, 'b>(name: &'a str, help: &'a str) -> Arg<'a, 'b> {
 }
 
 fn get_arg(matches: &ArgMatches, key: &str) -> Option<(Regex, usize)> {
-    if let Some(pattern) = matches.value_of(key) {
+    matches.value_of(key).map(|pattern| {
         let regex = Regex::new(&pattern).unwrap_or_else(|_| {
             eprintln!("Invalid regex: {:?}", pattern);
             std::process::exit(1);
         });
-        Some((regex, matches.index_of(key).unwrap()))
-    } else {
-        None
-    }
+        (regex, matches.index_of(key).unwrap())
+    })
 }
 
 fn hl<T, U>(opts: &Opts, reader: &mut U, output: &mut T)
