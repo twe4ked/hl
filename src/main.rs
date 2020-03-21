@@ -170,8 +170,8 @@ where
                                 stack.remove(pos);
                             }
                             let _ = write!(output, "{}", ResetColor);
-                            for x in &stack {
-                                let _ = write!(output, "{}", SetForegroundColor(*x));
+                            for color in &stack {
+                                let _ = write!(output, "{}", SetForegroundColor(*color));
                             }
                         }
                     }
