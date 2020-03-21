@@ -4,44 +4,11 @@ use regex::Regex;
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Write};
 
-#[derive(Debug, Default)]
-struct Opts {
-    red: Option<(Regex, usize)>,
-    green: Option<(Regex, usize)>,
-    yellow: Option<(Regex, usize)>,
-    blue: Option<(Regex, usize)>,
-    magenta: Option<(Regex, usize)>,
-    cyan: Option<(Regex, usize)>,
-    white: Option<(Regex, usize)>,
-}
-
-impl Opts {
-    fn patterns(&self) -> Vec<(Color, &(Regex, usize))> {
-        use Color::*;
-        let mut patterns = Vec::new();
-        if let Some(red) = &self.red {
-            patterns.push((Red, red));
-        }
-        if let Some(green) = &self.green {
-            patterns.push((Green, green));
-        }
-        if let Some(yellow) = &self.yellow {
-            patterns.push((Yellow, yellow));
-        }
-        if let Some(blue) = &self.blue {
-            patterns.push((Blue, blue));
-        }
-        if let Some(magenta) = &self.magenta {
-            patterns.push((Magenta, magenta));
-        }
-        if let Some(cyan) = &self.cyan {
-            patterns.push((Cyan, cyan));
-        }
-        if let Some(white) = &self.white {
-            patterns.push((White, white));
-        }
-        patterns
-    }
+#[derive(Debug)]
+struct Opt {
+    color: Color,
+    regex: Regex,
+    index: usize,
 }
 
 #[derive(Debug)]
@@ -76,7 +43,7 @@ impl Style {
 }
 
 macro_rules! opts {
-    ( $( $x:expr ),* ) => {
+    ( $( $color:path => $x:expr ),* ) => {
         {
             let mut app = App::new("hl")
                 .version("0.1.0")
@@ -87,21 +54,31 @@ macro_rules! opts {
             )*
             let matches = app.get_matches();
 
-            Opts {
-                red: get_arg(&matches, "red"),
-                green: get_arg(&matches, "green"),
-                yellow: get_arg(&matches, "yellow"),
-                blue: get_arg(&matches, "blue"),
-                magenta: get_arg(&matches, "magenta"),
-                cyan: get_arg(&matches, "cyan"),
-                white: get_arg(&matches, "white"),
-            }
+            let mut opts = Vec::new();
+            $(
+                if let Some((regex, index)) = get_arg(&matches, $x) {
+                    opts.push(Opt {
+                        color: $color,
+                        regex,
+                        index,
+                    });
+                }
+            )*
+            opts
         }
     };
 }
 
 fn main() {
-    let opts = opts!["red", "green", "yellow", "blue", "magenta", "cyan", "white"];
+    let opts = opts!(
+        Color::Red => "red",
+        Color::Green => "green",
+        Color::Yellow => "yellow",
+        Color::Blue => "blue",
+        Color::Magenta => "magenta",
+        Color::Cyan => "cyan",
+        Color::White => "white"
+    );
 
     let mut stdin = BufReader::new(std::io::stdin());
     let mut stdout = std::io::stdout();
@@ -128,7 +105,7 @@ fn get_arg(matches: &ArgMatches, key: &str) -> Option<(Regex, usize)> {
     })
 }
 
-fn hl<T, U>(opts: &Opts, reader: &mut U, output: &mut T)
+fn hl<T, U>(opts: &[Opt], reader: &mut U, output: &mut T)
 where
     T: Write,
     U: BufRead,
@@ -144,16 +121,16 @@ where
         }
 
         let mut indices = HashMap::<usize, Vec<Style>>::new();
-        for (color, (regex, order)) in opts.patterns() {
-            for mat in regex.find_iter(&input) {
+        for opt in opts {
+            for mat in opt.regex.find_iter(&input) {
                 indices
                     .entry(mat.start())
                     .or_insert_with(Vec::new)
-                    .push(Style::start(color, *order));
+                    .push(Style::start(opt.color, opt.index));
                 indices
                     .entry(mat.end())
                     .or_insert_with(Vec::new)
-                    .push(Style::end(color, *order));
+                    .push(Style::end(opt.color, opt.index));
             }
         }
         for (_, v) in indices.iter_mut() {
@@ -193,12 +170,23 @@ mod tests {
 
     #[test]
     fn it_works_multi_line() {
-        let opts = Opts {
-            red: Some((Regex::new("foo bar baz").unwrap(), 0)),
-            blue: Some((Regex::new("ba").unwrap(), 1)),
-            green: Some((Regex::new("bar").unwrap(), 2)),
-            ..Opts::default()
-        };
+        let opts = vec![
+            Opt {
+                color: Color::Red,
+                regex: Regex::new("foo bar baz").unwrap(),
+                index: 0,
+            },
+            Opt {
+                color: Color::Blue,
+                regex: Regex::new("ba").unwrap(),
+                index: 1,
+            },
+            Opt {
+                color: Color::Green,
+                regex: Regex::new("bar").unwrap(),
+                index: 2,
+            },
+        ];
 
         let mut output = Vec::new();
         let input = "foo bar baz qux bar bar
