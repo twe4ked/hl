@@ -2,7 +2,7 @@ use clap::{App, Arg, ArgMatches};
 use crossterm::style::{Color, ResetColor, SetForegroundColor};
 use regex::Regex;
 use std::collections::HashMap;
-use std::io::Write;
+use std::io::{BufRead, BufReader, Write};
 
 #[derive(Debug, Default)]
 struct Opts {
@@ -99,10 +99,10 @@ fn main() {
         white: get_arg(&matches, "white"),
     };
 
-    let input = read_stdin();
+    let mut stdin = BufReader::new(std::io::stdin());
     let mut stdout = std::io::stdout();
 
-    hl(&opts, &input, &mut stdout);
+    hl(&opts, &mut stdin, &mut stdout);
 }
 
 fn arg<'a, 'b>(name: &'a str, help: &'a str) -> Arg<'a, 'b> {
@@ -122,66 +122,69 @@ fn get_arg(matches: &ArgMatches, key: &str) -> Option<(String, usize)> {
     }
 }
 
-fn hl<T>(opts: &Opts, input: &str, output: &mut T)
+fn hl<T, U>(opts: &Opts, reader: &mut U, output: &mut T)
 where
     T: Write,
+    U: BufRead,
 {
-    let mut indices = HashMap::<usize, Vec<Style>>::new();
-    for (color, (pattern, order)) in opts.patterns() {
-        for mat in Regex::new(&pattern)
-            .unwrap_or_else(|_| {
-                eprintln!("Invalid regex: {:?}", pattern);
-                std::process::exit(1);
-            })
-            .find_iter(&input)
-        {
-            indices
-                .entry(mat.start())
-                .or_insert_with(Vec::new)
-                .push(Style::start(color, *order));
-            indices
-                .entry(mat.end())
-                .or_insert_with(Vec::new)
-                .push(Style::end(color, *order));
+    let mut input = String::new();
+    loop {
+        let len = reader.read_line(&mut input).unwrap_or_else(|e| {
+            eprintln!("{}", e);
+            std::process::exit(e.raw_os_error().unwrap_or(1));
+        });
+        if len == 0 {
+            break;
         }
-    }
-    for (_, v) in indices.iter_mut() {
-        v.sort_by(|a, b| a.order.cmp(&b.order));
-    }
 
-    let mut stack = Vec::new();
-    input.chars().enumerate().for_each(|(i, c)| {
-        if let Some(styles) = indices.get(&i) {
-            for style in styles {
-                match style.operation {
-                    Operation::Start => {
-                        stack.push(style.color);
-                        let _ = write!(output, "{}", SetForegroundColor(style.color));
-                    }
-                    Operation::End => {
-                        if let Some(pos) = stack.iter().rposition(|x| x == &style.color) {
-                            stack.remove(pos);
+        let mut indices = HashMap::<usize, Vec<Style>>::new();
+        for (color, (pattern, order)) in opts.patterns() {
+            for mat in Regex::new(&pattern)
+                .unwrap_or_else(|_| {
+                    eprintln!("Invalid regex: {:?}", pattern);
+                    std::process::exit(1);
+                })
+                .find_iter(&input)
+            {
+                indices
+                    .entry(mat.start())
+                    .or_insert_with(Vec::new)
+                    .push(Style::start(color, *order));
+                indices
+                    .entry(mat.end())
+                    .or_insert_with(Vec::new)
+                    .push(Style::end(color, *order));
+            }
+        }
+        for (_, v) in indices.iter_mut() {
+            v.sort_by(|a, b| a.order.cmp(&b.order));
+        }
+
+        let mut stack = Vec::new();
+        input.chars().enumerate().for_each(|(i, c)| {
+            if let Some(styles) = indices.get(&i) {
+                for style in styles {
+                    match style.operation {
+                        Operation::Start => {
+                            stack.push(style.color);
+                            let _ = write!(output, "{}", SetForegroundColor(style.color));
                         }
-                        let _ = write!(output, "{}", ResetColor);
-                        for x in &stack {
-                            let _ = write!(output, "{}", SetForegroundColor(*x));
+                        Operation::End => {
+                            if let Some(pos) = stack.iter().rposition(|x| x == &style.color) {
+                                stack.remove(pos);
+                            }
+                            let _ = write!(output, "{}", ResetColor);
+                            for x in &stack {
+                                let _ = write!(output, "{}", SetForegroundColor(*x));
+                            }
                         }
                     }
                 }
             }
-        }
-        let _ = write!(output, "{}", c);
-    });
-}
-
-fn read_stdin() -> String {
-    use std::io::{stdin, Read};
-    let mut input = Vec::new();
-    stdin().read_to_end(&mut input).unwrap_or_else(|e| {
-        eprintln!("{}", e);
-        std::process::exit(e.raw_os_error().unwrap_or(1));
-    });
-    String::from_utf8(input).expect("invalid UTF-8 input")
+            let _ = write!(output, "{}", c);
+        });
+        input.clear();
+    }
 }
 
 #[cfg(test)]
@@ -203,8 +206,9 @@ foo bar
 qux baz
 bar
 foo bar baz bar"
-            .to_string();
-        hl(&opts, &input, &mut output);
+            .as_bytes();
+        let mut input = BufReader::new(input);
+        hl(&opts, &mut input, &mut output);
         let output = String::from_utf8(output).unwrap();
 
         let red = format!("{}", SetForegroundColor(Color::Red));
