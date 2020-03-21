@@ -1,4 +1,4 @@
-use clap::{App, Arg};
+use clap::{crate_authors, crate_version, App, Arg};
 use crossterm::style::{Color, ResetColor, SetForegroundColor};
 use regex::Regex;
 use std::collections::HashMap;
@@ -46,8 +46,8 @@ macro_rules! opts {
     ( $( $color:path => $name:expr ),* ) => {
         {
             let mut app = App::new("hl")
-                .version("0.1.0")
-                .author("Odin Dutton <odindutton@gmail.com>")
+                .version(crate_version!())
+                .author(crate_authors!())
                 .about("Highlight patterns.");
             $(
                 app = app.arg(
