@@ -75,29 +75,33 @@ impl Style {
     }
 }
 
-fn main() {
-    let matches = App::new("hl")
-        .version("0.1.0")
-        .author("Odin Dutton <odindutton@gmail.com>")
-        .about("Highlight patterns.")
-        .arg(arg("red", "Highlight PATTERN in red"))
-        .arg(arg("green", "Highlight PATTERN in green"))
-        .arg(arg("yellow", "Highlight PATTERN in yellow"))
-        .arg(arg("blue", "Highlight PATTERN in blue"))
-        .arg(arg("magenta", "Highlight PATTERN in magenta"))
-        .arg(arg("cyan", "Highlight PATTERN in cyan"))
-        .arg(arg("white", "Highlight PATTERN in white"))
-        .get_matches();
+macro_rules! opts {
+    ( $( $x:expr ),* ) => {
+        {
+            let mut app = App::new("hl")
+                .version("0.1.0")
+                .author("Odin Dutton <odindutton@gmail.com>")
+                .about("Highlight patterns.");
+            $(
+                 app = app.arg(arg($x, concat!("Highlight PATTERN in ", $x)));
+            )*
+            let matches = app.get_matches();
 
-    let opts = Opts {
-        red: get_arg(&matches, "red"),
-        green: get_arg(&matches, "green"),
-        yellow: get_arg(&matches, "yellow"),
-        blue: get_arg(&matches, "blue"),
-        magenta: get_arg(&matches, "magenta"),
-        cyan: get_arg(&matches, "cyan"),
-        white: get_arg(&matches, "white"),
+            Opts {
+                red: get_arg(&matches, "red"),
+                green: get_arg(&matches, "green"),
+                yellow: get_arg(&matches, "yellow"),
+                blue: get_arg(&matches, "blue"),
+                magenta: get_arg(&matches, "magenta"),
+                cyan: get_arg(&matches, "cyan"),
+                white: get_arg(&matches, "white"),
+            }
+        }
     };
+}
+
+fn main() {
+    let opts = opts!["red", "green", "yellow", "blue", "magenta", "cyan", "white"];
 
     let mut stdin = BufReader::new(std::io::stdin());
     let mut stdout = std::io::stdout();
