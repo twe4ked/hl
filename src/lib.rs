@@ -43,21 +43,23 @@ impl Style {
 
 #[macro_export]
 macro_rules! opts {
-    ( $( $color:path => $name:expr ),* ) => {
+    ( $( $color:path => ($name:expr, $short:expr) ),* ) => {
         {
             let mut app = clap::App::new("hl")
                 .version(clap::crate_version!())
                 .author(clap::crate_authors!())
                 .about("Highlight patterns.");
             $(
-                app = app.arg(
-                    clap::Arg::with_name($name)
-                        .short($name.chars().next().unwrap().to_string())
-                        .long($name)
-                        .value_name("PATTERN")
-                        .help(concat!("Highlight PATTERN in ", $name))
-                        .takes_value(true)
-                );
+                let mut arg = clap::Arg::with_name($name)
+                    .long($name)
+                    .value_name("PATTERN")
+                    .help(concat!("Highlight PATTERN in ", $name))
+                    .takes_value(true);
+                let short: Option<&str> = $short;
+                if let Some(s) = short {
+                    arg = arg.short(s);
+                }
+                app = app.arg(arg);
             )*
             let matches = app.get_matches();
 
