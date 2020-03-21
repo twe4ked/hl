@@ -3,6 +3,12 @@ name = "hl"
 version = "0.1.0"
 authors = ["Odin Dutton <odindutton@gmail.com>"]
 edition = "2018"
+description = "Highlight patterns."
+repository = "https://github.com/twe4ked/hl"
+license = "MIT"
+keywords = ["highlight"]
+categories = ["command-line-utilities", "development-tools"]
+readme = "README.md"
 
 [dependencies]
 clap = "2.33.0"
