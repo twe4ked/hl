@@ -23,6 +23,6 @@ OPTIONS:
 ## Example:
 
 ```
-$ make
-$ cat fixtures/example.txt | ./hl --red foo\ bar\ baz --blue ba --green bar
+$ cargo install hl
+$ hl --red foo\ bar\ baz --blue ba --green bar < fixtures/example.txt
 ```
