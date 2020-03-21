@@ -105,9 +105,9 @@ fn main() {
     hl(&opts, &input, &mut stdout);
 }
 
-fn arg<'a>(name: &'a str, help: &'a str) -> Arg<'a> {
+fn arg<'a, 'b>(name: &'a str, help: &'a str) -> Arg<'a, 'b> {
     Arg::with_name(name)
-        .short(name.chars().next().unwrap())
+        .short(name.chars().next().unwrap().to_string())
         .long(name)
         .value_name("PATTERN")
         .help(help)
