@@ -43,7 +43,7 @@ impl Style {
 }
 
 macro_rules! opts {
-    ( $( $color:path => $x:expr ),* ) => {
+    ( $( $color:path => $name:expr ),* ) => {
         {
             let mut app = App::new("hl")
                 .version("0.1.0")
@@ -51,11 +51,11 @@ macro_rules! opts {
                 .about("Highlight patterns.");
             $(
                 app = app.arg(
-                    Arg::with_name($x)
-                        .short($x.chars().next().unwrap().to_string())
-                        .long($x)
+                    Arg::with_name($name)
+                        .short($name.chars().next().unwrap().to_string())
+                        .long($name)
                         .value_name("PATTERN")
-                        .help(concat!("Highlight PATTERN in ", $x))
+                        .help(concat!("Highlight PATTERN in ", $name))
                         .takes_value(true)
                 );
             )*
@@ -63,12 +63,12 @@ macro_rules! opts {
 
             let mut opts = Vec::new();
             $(
-                matches.value_of($x).map(|pattern| {
+                matches.value_of($name).map(|pattern| {
                     let regex = Regex::new(&pattern).unwrap_or_else(|_| {
                         eprintln!("Invalid regex: {:?}", pattern);
                         std::process::exit(1);
                     });
-                    let index = matches.index_of($x).unwrap();
+                    let index = matches.index_of($name).unwrap();
                     opts.push(Opt {
                         color: $color,
                         regex,
