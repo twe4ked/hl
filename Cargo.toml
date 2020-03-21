@@ -1,6 +1,6 @@
 [package]
 name = "hl"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Odin Dutton <odindutton@gmail.com>"]
 edition = "2018"
 description = "Highlight patterns."
