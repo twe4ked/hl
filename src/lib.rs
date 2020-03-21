@@ -188,13 +188,8 @@ mod tests {
         ];
 
         let mut output = Vec::new();
-        let input = "foo bar baz qux bar bar
-foo bar
-qux baz
-bar
-foo bar baz bar"
-            .as_bytes();
-        let mut input = BufReader::new(input);
+        let input = include_bytes!("../fixtures/example.txt").to_vec();
+        let mut input = BufReader::new(&input[..]);
         hl(&opts, &mut input, &mut output);
         let output = String::from_utf8(output).unwrap();
 
@@ -209,7 +204,8 @@ foo bar baz bar"
 foo {blue}{green}ba{reset}{green}r{reset}
 qux {blue}ba{reset}z
 {blue}{green}ba{reset}{green}r{reset}
-{red}foo {blue}{green}ba{reset}{red}{green}r{reset}{red} {blue}ba{reset}{red}z{reset} {blue}{green}ba{reset}{green}r",
+{red}foo {blue}{green}ba{reset}{red}{green}r{reset}{red} {blue}ba{reset}{red}z{reset} {blue}{green}ba{reset}{green}r{reset}
+",
             red = red,
             green = green,
             blue = blue,
