@@ -86,6 +86,7 @@ where
     W: Write,
     R: BufRead,
 {
+    let mut reset = false;
     let mut input = String::new();
     loop {
         let len = reader.read_line(&mut input).unwrap_or_else(|e| {
@@ -119,13 +120,16 @@ where
                 for style in styles {
                     match style.operation {
                         Operation::Start => {
+                            reset = false;
                             stack.push(style.color);
                             let _ = write!(writer, "{}", SetForegroundColor(style.color));
                         }
                         Operation::End => {
                             stack.pop(style.color);
+                            reset = true;
                             let _ = write!(writer, "{}", ResetColor);
                             for color in stack.items().iter() {
+                                reset = false;
                                 let _ = write!(writer, "{}", SetForegroundColor(*color));
                             }
                         }
@@ -135,6 +139,9 @@ where
             let _ = write!(writer, "{}", c);
         });
         input.clear();
+    }
+    if !reset {
+        let _ = write!(writer, "{}", ResetColor);
     }
 }
 
@@ -168,7 +175,7 @@ mod tests {
     use std::io::BufReader;
 
     #[test]
-    fn it_works_multi_line() {
+    fn multi_line() {
         let opts = vec![
             Opt {
                 color: Color::Red,
@@ -211,6 +218,30 @@ qux {blue}ba{reset}z
             blue = blue,
             reset = reset
         );
+
+        println!("Output:\n{}{}", &output, reset);
+        println!("Expected:\n{}{}", &expected, reset);
+        assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn no_final_linebreak() {
+        let opts = vec![Opt {
+            color: Color::Red,
+            regex: Regex::new("foo").unwrap(),
+            index: 0,
+        }];
+
+        let mut output = Vec::new();
+        let input = "foo".as_bytes();
+        let mut input = BufReader::new(input);
+        hl(&opts, &mut input, &mut output);
+        let output = String::from_utf8(output).unwrap();
+
+        let red = format!("{}", SetForegroundColor(Color::Red));
+        let reset = format!("{}", ResetColor);
+
+        let expected = format!("{red}foo{reset}", red = red, reset = reset);
 
         println!("Output:\n{}{}", &output, reset);
         println!("Expected:\n{}{}", &expected, reset);
