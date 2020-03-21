@@ -3,15 +3,21 @@
 ## Help
 
 ```
-Usage: hl [--COLOR=PATTERN ...]
-    -r PATTERN, --red=PATTERN        Highlight PATTERN in red
-    -g PATTERN, --green=PATTERN      Highlight PATTERN in green
-    -y PATTERN, --yellow=PATTERN     Highlight PATTERN in yellow
-    -b PATTERN, --blue=PATTERN       Highlight PATTERN in blue
-    -m PATTERN, --magenta=PATTERN    Highlight PATTERN in magenta
-    -c PATTERN, --cyan=PATTERN       Highlight PATTERN in cyan
-    -w PATTERN, --white=PATTERN      Highlight PATTERN in white
-    -h, --help                       Display help
+USAGE:
+    hl [OPTIONS]
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+    -b, --blue <PATTERN>       Highlight PATTERN in blue
+    -c, --cyan <PATTERN>       Highlight PATTERN in cyan
+    -g, --green <PATTERN>      Highlight PATTERN in green
+    -m, --magenta <PATTERN>    Highlight PATTERN in magenta
+    -r, --red <PATTERN>        Highlight PATTERN in red
+    -w, --white <PATTERN>      Highlight PATTERN in white
+    -y, --yellow <PATTERN>     Highlight PATTERN in yellow
 ```
 
 ## Example:

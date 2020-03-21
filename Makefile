@@ -1,2 +1,2 @@
 default:
-	crystal build hl.cr
+	cargo build
